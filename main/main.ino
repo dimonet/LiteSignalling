@@ -48,21 +48,21 @@
 #define E_mode           0                      // адресс для сохранения режимов работы 
 #define E_inTestMod      1                      // адресс для сохранения режима тестирования
 
-#define E_delaySiren     4                      // адресс для сохранения длины паузы между срабатыванием датяиков и включением сирены (в сикундах)
-#define E_delayOnContr   5                      // время паузы от нажатия кнопки до установки режима охраны (в сикундах)
+#define E_delaySiren     2                      // адресс для сохранения длины паузы между срабатыванием датяиков и включением сирены (в сикундах)
+#define E_delayOnContr   3                      // время паузы от нажатия кнопки до установки режима охраны (в сикундах)
 
-#define E_SirenEnabled   23
-#define E_PIR1Siren      24                     
-#define E_TensionSiren   26
+#define E_SirenEnabled   4
+#define E_PIR1Siren      5                     
+#define E_TensionSiren   6
 
-#define E_IsPIR1Enabled  27                     
-#define E_TensionEnabled 30
+#define E_IsPIR1Enabled  7                     
+#define E_TensionEnabled 8
 
 // Количество нажатий на кнопку для включений режимова
-#define E_BtnOnContr     31                     // количество нажатий на кнопку для установки на охрану
-#define E_BtnInTestMod   32                     // количество нажатий на кнопку для включение/отключения режима тестирования 
-#define E_BtnSkimpySiren 34                     // количество нажатий на кнопку для кратковременного включения сирены
-#define E_BtnOutOfContr  35
+#define E_BtnOnContr     9                     // количество нажатий на кнопку для установки на охрану
+#define E_BtnInTestMod   10                     // количество нажатий на кнопку для включение/отключения режима тестирования 
+#define E_BtnSkimpySiren 11                     // количество нажатий на кнопку для кратковременного включения сирены
+#define E_BtnOutOfContr  12
 
 
 //// ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ////
@@ -180,62 +180,99 @@ void loop()
       digitalWrite(boardLED, digitalRead(boardLED) == LOW);                               // то мигаем внутренним светодиодом на плате
       prTestBlinkLed = millis();
     }
-  }
- 
-  if (countPressBtn != 0)
-  {     
-    if (GetElapsed(prLastPressBtn) > timeAfterPressBtn)
-    {       
-      // установка на охрану countBtnOnContrMod
-      if (mode == OutOfContrMod && countPressBtn == EEPROM.read(E_BtnOnContr))              // если кнопку нажали заданное количество для включение/отключения режима тестирования
-      {
-        countPressBtn = 0;  
-        Set_OnContrMod(true);       
-      }
-      else
-      // включение/отключения режима тестирования
-      if (mode == OutOfContrMod && countPressBtn == EEPROM.read(E_BtnInTestMod))            // если кнопку нажали заданное количество для включение/отключения режима тестирования
-      {
-        countPressBtn = 0;  
-        PlayTone(sysTone, 250);                                                             // сигнализируем об этом спикером  
-        InTestMod(!inTestMod);
-      }                                                                               
-      else
-      // кратковременное включение сирены (для тестирования модуля сирены)
-      if (mode == OutOfContrMod && countPressBtn == EEPROM.read(E_BtnSkimpySiren))                      
-      {
-        countPressBtn = 0;  
-        PlayTone(sysTone, 250);                                    
-        SkimpySiren();
-      }        
-      
-      // выключение режима контроля (если настроена для этого кнопка)
-      else 
-      if (mode == OnContrMod && countPressBtn == EEPROM.read(E_BtnOutOfContr))      
-      {
-        delay(200);                                                                         // пайза, что б не сливались звуковые сигналы нажатия кнопки и установки режима
-        countPressBtn = 0;          
-        Set_OutOfContrMod();             
-      }
-      else
-      {
-        PlayTone(sysTone, 250);   
-        countPressBtn = 0;  
-      }                            
-   }
-    else
-    // снятие кнопкой с охраны (работает только в тестовом режиме, когда не блокируются прерывания)
-    if (mode == OnContrMod && inTestMod)                                                    // в тестовом режиме можно сниамть кнопкой с охраны
-    {
-      delay(200);                                                                           // пайза, что б не сливались звуковые сигналы нажатия кнопки и установки режима
-      countPressBtn = 0;   
-      Set_OutOfContrMod();       
-    }                  
-  }
+  } 
   
-  ////// IN CONTROL MODE ///////  
-  if (mode == OnContrMod)                                                                  // если в режиме охраны
+  if (mode == OutOfContrMod) 
   {
+    if (countPressBtn != 0)
+    {     
+      if (GetElapsed(prLastPressBtn) > timeAfterPressBtn)
+      {       
+        // установка на охрану countBtnOnContrMod
+        if (countPressBtn == EEPROM.read(E_BtnOnContr))              // если кнопку нажали заданное количество для включение/отключения режима тестирования
+        {
+          countPressBtn = 0;  
+          Set_OnContrMod(true);       
+        }
+        else
+        // включение/отключения режима тестирования
+        if (countPressBtn == EEPROM.read(E_BtnInTestMod))            // если кнопку нажали заданное количество для включение/отключения режима тестирования
+        {
+          countPressBtn = 0;  
+          PlayTone(sysTone, 250);                                                             // сигнализируем об этом спикером  
+          InTestMod(!inTestMod);
+        }                                                                               
+        else
+        // кратковременное включение сирены (для тестирования модуля сирены)
+        if (countPressBtn == EEPROM.read(E_BtnSkimpySiren))                      
+        {
+          countPressBtn = 0;  
+          PlayTone(sysTone, 250);                                    
+          SkimpySiren();
+        }        
+        else
+        {
+          PlayTone(sysTone, 250);   
+          countPressBtn = 0;  
+        }                            
+      }                   
+    }    
+  }                                                                                           // end OutOfContrMod  
+  else
+  ////// IN CONTROL MODE ///////  
+  if (mode == OnContrMod)                                                                     // если в режиме охраны
+  {    
+    if (countPressBtn != 0)
+    {     
+      if (GetElapsed(prLastPressBtn) > timeAfterPressBtn)
+      {       
+        // установка на охрану countBtnOnContrMod
+        if (mode == OutOfContrMod && countPressBtn == EEPROM.read(E_BtnOnContr))              // если кнопку нажали заданное количество для включение/отключения режима тестирования
+        {
+          countPressBtn = 0;  
+          Set_OnContrMod(true);       
+        }
+        else
+        // включение/отключения режима тестирования
+        if (mode == OutOfContrMod && countPressBtn == EEPROM.read(E_BtnInTestMod))            // если кнопку нажали заданное количество для включение/отключения режима тестирования
+        {
+          countPressBtn = 0;  
+          PlayTone(sysTone, 250);                                                             // сигнализируем об этом спикером  
+          InTestMod(!inTestMod);
+        }                                                                               
+        else
+        // кратковременное включение сирены (для тестирования модуля сирены)
+        if (mode == OutOfContrMod && countPressBtn == EEPROM.read(E_BtnSkimpySiren))                      
+        {
+          countPressBtn = 0;  
+          PlayTone(sysTone, 250);                                    
+          SkimpySiren();
+        }        
+        
+        // выключение режима контроля (если настроена для этого кнопка)
+        else 
+        if (mode == OnContrMod && countPressBtn == EEPROM.read(E_BtnOutOfContr))      
+        {
+          delay(200);                                                                         // пайза, что б не сливались звуковые сигналы нажатия кнопки и установки режима
+          countPressBtn = 0;          
+          Set_OutOfContrMod();             
+        }
+        else
+        {
+          PlayTone(sysTone, 250);   
+          countPressBtn = 0;  
+        }                            
+     }
+     else
+      // снятие кнопкой с охраны (работает только в тестовом режиме, когда не блокируются прерывания)
+      if (mode == OnContrMod && inTestMod)                                                    // в тестовом режиме можно сниамть кнопкой с охраны
+      {
+        delay(200);                                                                           // пайза, что б не сливались звуковые сигналы нажатия кнопки и установки режима
+        countPressBtn = 0;   
+        Set_OutOfContrMod();       
+      }                  
+    }
+    
     if (isSiren && !inTestMod)
     {
       if (GetElapsed(prSiren) > timeSiren)                                                 // если включена сирена и сирена работает больше установленного времени то выключаем ее
@@ -283,7 +320,7 @@ void loop()
       else
         prSiren = millis();      
     }         
-  }                                                                                       // end OnContrMod
+  }                                                                                      // end OnContrMod                                                                                        
 }
 
 
