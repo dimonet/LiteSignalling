@@ -343,11 +343,11 @@ void ClickButton()
 
 bool Set_OutOfContrMod()                                // метод для снятие с охраны
 { 
+  mode = OutOfContrMod;                                 // снимаем с охраны
   interrupt = true;                                     // разрешаем обрабатывать прерывания
   digitalWrite(OnContrLED, LOW); 
   digitalWrite(boardLED, LOW);
-  PlayTone(sysTone, 500);
-  mode = OutOfContrMod;                                 // снимаем с охраны
+  PlayTone(sysTone, 500);  
   StopSiren();                                          // выключаем сирену                         
   reqSirena = false; 
     
